@@ -37,7 +37,7 @@ class RootWidget(RelativeLayout):
 
 
 root_widget = RootWidget()
-user_data = dict()
+# user_data = dict()
 
 
 class GameApp(App):
@@ -45,10 +45,9 @@ class GameApp(App):
   def build(self):
     return root_widget
 
-
+   
 if __name__ == '__main__':
-  print sys.argv, sys.argv[-1] == 'prod'
-  if sys.argv[1] == 'prod':
-    import game
-  else: Clock.schedule_interval(read_line, 0.1)
+  if len(sys.argv) > 1 and sys.argv[1] == 'dev':
+    Clock.schedule_interval(read_line, 0.1)
+  else: import game
   GameApp().run()

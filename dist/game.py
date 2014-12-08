@@ -2,8 +2,9 @@ from random import randint
 
 from kivy.app import App
 from kivy.animation import Animation
+from kivy.config import Config
 from kivy.clock import Clock
-# from kivy.core.audio import SoundLoader
+from kivy.core.audio import SoundLoader
 from kivy.core.audio.audio_pygame import SoundPygame
 from kivy.core.window import Window
 from kivy.graphics import Color, Rectangle
@@ -14,18 +15,30 @@ from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.widget import Widget
 
 from __main__ import root_widget
+from dialog.gameover import GameOver
+from dialog.newgame import NewGame
 from drone import Drone
 from explosion import Explosion
+from musicplayer import MusicPlayer
 from projectile import Projectile
 from saucer import Saucer
 from ship import Ship
 from util import check_classname
 
 
-class Game(Widget):
+# music = SoundLoader.load('music/1 - Bishopric Of Cambrai - Day Of The Dispair.mp3')
+# music = SoundLoader.load('sfx/laser.wav')
+# music.loop = True
+# music.play()
+# Config.set('graphics', 'fullscreen', 'auto')
+# Config.set('graphics', 'borderless', 1)
+Window.fullscreen = 'auto'
+
+
+class GameWidget(Widget):
 
   def __init__(self, **kw):
-    super(Game, self).__init__(**kw)
+    super(GameWidget, self).__init__(**kw)
     self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
     self._keyboard.bind(on_key_down=self._on_keyboard_down)
     self._keyboard.bind(on_key_up=self._on_keyboard_up)
@@ -38,7 +51,7 @@ class Game(Widget):
     self.counter = 0
     self.drones = []
     self.saucers = []
-    Clock.schedule_interval(self.anim_objects, 1./60)
+    Clock.schedule_interval(self.update_game, 1./60)
     self.sfx_laser = SoundPygame(source='sfx/laser.wav')
     self.sfx_explo = SoundPygame(source='sfx/explosion.wav')
     # self.sfx_laser = SoundLoader.load('sfx/laser.wav')
@@ -172,7 +185,7 @@ class Game(Widget):
         bullet3.y = saucer.y - saucer.height/2
         self.add_widget(bullet3)
       
-  def anim_objects(self, dt):
+  def update_game(self, dt):
     self.counter += 1
     self.accel = max(30, self.counter / 200)
     self.spawn_drone()
@@ -239,11 +252,9 @@ class Game(Widget):
     lbl_fps.text = 'FPS: %.2f' % Clock.get_fps()
     # game over
     if self.ship.shield <= 0:
-      popup = Popup(title='GAME OVER',
-        content=Label(text='Score: %s' % self.score),
-        size_hint=(None, None), size=(400, 400))
-      popup.open()
-      popup.bind(on_dismiss=self.app_close)
+      go_popup = GameOver()
+      go_popup.set_score(self.score)
+      go_popup.open()
       return False
     
   def explosion(self, x, y):
@@ -276,12 +287,15 @@ class Game(Widget):
   def app_close(self, *args):
     App.get_running_app().stop()
       
-    
-game = Game()
+      
+game_widget = GameWidget()
 lbl_fps = Label(pos_hint={'center_x': .95, 'center_y': .95})
 # lbl_hp = Label(pos_hint={'center_x': .1, 'center_y': .95})
 lbl_score = Label(pos_hint={'center_x': .95, 'center_y': .90})
-root_widget.add_widget(game)
+root_widget.add_widget(game_widget)
 root_widget.add_widget(lbl_fps)
 # root_widget.add_widget(lbl_hp)
 root_widget.add_widget(lbl_score)
+
+musicplayer = MusicPlayer()
+musicplayer.start()
