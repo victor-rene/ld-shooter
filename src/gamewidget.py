@@ -49,6 +49,7 @@ class GameWidget(Widget):
     self.bind(size=self._update_rect)
     self.bind(pos=self._update_rect)
     self.counter = 0
+    self.level = 0
     self.drones = []
     self.saucers = []
     Clock.schedule_interval(self.update_game, 1./60)
@@ -59,7 +60,7 @@ class GameWidget(Widget):
     self.img_explo = []
     with self.canvas.after:
       Color(.8, .2, .2, 1)
-      self.lifebar = Rectangle() 
+      self.lifebar = Rectangle()
     self.score = 0
     self.accel = 0
     self._initialized = False
@@ -89,7 +90,7 @@ class GameWidget(Widget):
 
   def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
     if keycode[1] == 'escape':
-      GameMenu.close_app()
+      self.root_widget.close_app()
     if keycode[1] == 'left':
       self.ship.steer_x(-20)
     elif keycode[1] == 'right':
@@ -134,7 +135,7 @@ class GameWidget(Widget):
     return True
     
   def spawn_drone(self):
-    if self.counter % (160 - self.accel) == 0:
+    if self.counter % (60 * self.level_mod) == 0:
       drone = Drone()
       max_x = self.width/2 + self.height/2
       min_x = self.width/2 - self.height/2
@@ -146,7 +147,7 @@ class GameWidget(Widget):
       self.drones.append(drone)
       
   def fire_drone(self):
-    if self.counter % (80 - self.accel) == 0:
+    if self.counter % int(30 * self.level_mod) == 0:
       for drone in self.drones:
         bullet1 = Projectile('bullet', 0, -10, 'computer')
         bullet1.x = drone.center_x - bullet1.width/2 + drone.width * .4
@@ -158,7 +159,7 @@ class GameWidget(Widget):
         self.add_widget(bullet2)
         
   def spawn_saucer(self):
-    if self.counter % (120 - self.accel) == 0:
+    if self.counter % (90 * self.level_mod) == 0:
       saucer = Saucer()
       max_x = self.width/2 + self.height/2
       min_x = self.width/2 - self.height/2
@@ -170,7 +171,7 @@ class GameWidget(Widget):
       self.saucers.append(saucer)
       
   def fire_saucer(self):
-    if self.counter % (60 - self.accel) == 0:
+    if self.counter % (30 * self.level_mod) == 0:
       for saucer in self.saucers:
         bullet1 = Projectile('bullet', 0, -10, 'computer')
         bullet1.x = saucer.center_x - bullet1.width/2
@@ -187,7 +188,12 @@ class GameWidget(Widget):
       
   def update_game(self, dt):
     self.counter += 1
-    self.accel = max(30, self.counter / 200)
+    level = min(19, self.counter / 900)
+    if level > self.level:
+      self.level = level
+      self.root_widget.ids['level'].text = 'LEVEL: %s' % (self.level + 1)
+      self.ship.shield = 100
+    self.level_mod = (1 - self.level/40.)
     self.spawn_drone()
     self.spawn_saucer()
     self.fire_drone()

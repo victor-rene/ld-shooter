@@ -26,6 +26,10 @@ class RootWidget(RelativeLayout):
     self.add_widget(lbl_score)
     self.ids['score'] = lbl_score
 
+    lbl_level = Label(pos_hint={'center_x': .95, 'center_y': .85})
+    self.add_widget(lbl_level)
+    self.ids['level'] = lbl_level
+
     musicplayer = MusicPlayer()
     musicplayer.start()
 
