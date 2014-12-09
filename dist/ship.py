@@ -37,7 +37,6 @@ class Ship(Image):
       self.rect_shield.source = None
       
   def on_pos(self, *args):
-    print self.size
     if self.x < 0:
       self.x = 0
     if self.x > self.parent.width - self.width:

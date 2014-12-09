@@ -4,7 +4,8 @@ from Queue import Queue, Empty
 
 from kivy.app import App
 from kivy.clock import Clock
-from kivy.uix.relativelayout import RelativeLayout
+
+from rootwidget import RootWidget
 
 
 def enqueue_input(input, queue):
@@ -30,14 +31,7 @@ def read_line(dt):
       exec(line)
 
 
-class RootWidget(RelativeLayout):
-
-  def __init__(self, **kw):
-    super(RootWidget, self).__init__(**kw)
-
-
 root_widget = RootWidget()
-# user_data = dict()
 
 
 class GameApp(App):
@@ -49,5 +43,5 @@ class GameApp(App):
 if __name__ == '__main__':
   if len(sys.argv) > 1 and sys.argv[1] == 'dev':
     Clock.schedule_interval(read_line, 0.1)
-  else: import game
+  else: root_widget.new_game()
   GameApp().run()
