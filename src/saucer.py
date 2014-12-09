@@ -11,3 +11,4 @@ class Saucer(Image):
     self.dx = 0
     self.dy = 0
     self.size = 50, 50
+    self.counter = 0

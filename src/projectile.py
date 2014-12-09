@@ -9,3 +9,4 @@ class Projectile(Image):
     self.dx = dx
     self.dy = dy
     self.player = player
+    self.score_bonus = 1

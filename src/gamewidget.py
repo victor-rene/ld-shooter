@@ -99,15 +99,18 @@ class GameWidget(Widget):
       self.ship.steer_y(20)
     elif keycode[1] == 'down':
       self.ship.steer_y(-20)
-    elif keycode[1] == 'd':
+    elif keycode[1] == 'f' and not self.ship.is_shielded and self.ship.cooldown == 0:
+      self.ship.cooldown = 25
       missile = Projectile('missile', 0, 10, 'human')
+      missile.score_bonus = 5
       missile.size = 75, 75
       missile.x = self.ship.get_center_x() - missile.width / 2
       missile.y = self.ship.y + self.ship.height
       self.add_widget(missile)
-    elif keycode[1] == 's':
+    elif keycode[1] == 's' and not self.ship.is_shielded and self.ship.cooldown == 0:
       # if self.sfx_laser.state == 'play':
         # self.sfx_laser.stop()
+      self.ship.cooldown = 5   
       self.sfx_laser.play()
       laser1 = Projectile('laser', 0, 20, 'human')
       laser1.x = self.ship.x + self.ship.width * .35
@@ -118,9 +121,9 @@ class GameWidget(Widget):
       laser2.y = self.ship.y + self.ship.height / 10
       self.add_widget(laser2)
     elif keycode[1] == 'd':
-      self.ship.shield('blue')
-    elif keycode[1] == 's':
-      self.ship.shield('green')
+      self.ship.toggle_shield()
+    # elif keycode[1] == 'q':
+      # self.ship.shield('green')
     return True
     
   def _on_keyboard_up(self, keyboard, keycode):
@@ -135,7 +138,7 @@ class GameWidget(Widget):
     return True
     
   def spawn_drone(self):
-    if self.counter % (60 * self.level_mod) == 0:
+    if self.counter % (60 - self.level*2) == 0:
       drone = Drone()
       max_x = self.width/2 + self.height/2
       min_x = self.width/2 - self.height/2
@@ -147,8 +150,9 @@ class GameWidget(Widget):
       self.drones.append(drone)
       
   def fire_drone(self):
-    if self.counter % int(30 * self.level_mod) == 0:
-      for drone in self.drones:
+    for drone in self.drones:
+      if drone.counter > (30 * self.level_mod):
+        drone.counter = 0
         bullet1 = Projectile('bullet', 0, -10, 'computer')
         bullet1.x = drone.center_x - bullet1.width/2 + drone.width * .4
         bullet1.y = drone.y
@@ -157,9 +161,10 @@ class GameWidget(Widget):
         bullet2.x = drone.center_x - bullet2.width/2 - drone.width * .4
         bullet2.y = drone.y
         self.add_widget(bullet2)
+      else: drone.counter += 1
         
   def spawn_saucer(self):
-    if self.counter % (90 * self.level_mod) == 0:
+    if self.counter % (90 - self.level*2) == 0:
       saucer = Saucer()
       max_x = self.width/2 + self.height/2
       min_x = self.width/2 - self.height/2
@@ -171,8 +176,9 @@ class GameWidget(Widget):
       self.saucers.append(saucer)
       
   def fire_saucer(self):
-    if self.counter % (30 * self.level_mod) == 0:
-      for saucer in self.saucers:
+    for saucer in self.saucers:
+      if saucer.counter > (30 * self.level_mod):
+        saucer.counter = 0
         bullet1 = Projectile('bullet', 0, -10, 'computer')
         bullet1.x = saucer.center_x - bullet1.width/2
         bullet1.y = saucer.y - saucer.height/2
@@ -185,14 +191,20 @@ class GameWidget(Widget):
         bullet3.x = saucer.center_x - bullet3.width/2 + saucer.width * .4
         bullet3.y = saucer.y - saucer.height/2
         self.add_widget(bullet3)
+      else: saucer.counter += 1
       
   def update_game(self, dt):
     self.counter += 1
-    level = min(19, self.counter / 900)
+    if self.ship.cooldown:
+      self.ship.cooldown -= 1
+    level = self.counter / 600
+    if level == 20:
+      self.ship.hp = 0
     if level > self.level:
       self.level = level
       self.root_widget.ids['level'].text = 'LEVEL: %s' % (self.level + 1)
-      self.ship.shield = 100
+      self.ship.hp = self.ship.hp_max
+      self.update_health()
     self.level_mod = (1 - self.level/40.)
     self.spawn_drone()
     self.spawn_saucer()
@@ -210,7 +222,7 @@ class GameWidget(Widget):
           if projectile.player == 'human':
             for drone in self.drones:
               if projectile.collide_widget(drone):
-                self.inc_score(1)
+                self.inc_score(projectile.score_bonus)
                 self.explosion(drone.x, drone.y)
                 self.remove_widget(projectile)
                 self.remove_widget(drone)
@@ -220,7 +232,7 @@ class GameWidget(Widget):
                 
             for saucer in self.saucers:
               if projectile.collide_widget(saucer):
-                self.inc_score(1)
+                self.inc_score(projectile.score_bonus)
                 self.explosion(saucer.x, saucer.y)
                 self.remove_widget(projectile)
                 self.remove_widget(saucer)
@@ -230,9 +242,10 @@ class GameWidget(Widget):
           elif projectile.player == 'computer':
             if projectile.collide_widget(self.ship):
               self.remove_widget(projectile)
-              self.ship.shield -= 1
-              self.update_health() 
-              self.blink()  
+              if not self.ship.is_shielded:
+                self.ship.hp -= 1
+                self.update_health() 
+                self.blink()  
                 
       # outside of screen        
       if child.y < - 200:
@@ -257,7 +270,7 @@ class GameWidget(Widget):
     # fps update  
     self.root_widget.ids['fps'].text = 'FPS: %.2f' % Clock.get_fps()
     # game over
-    if self.ship.shield <= 0:
+    if self.ship.hp <= 0:
       go_popup = GameOver(self.root_widget)
       go_popup.set_score(self.score)
       go_popup.open()
@@ -283,7 +296,7 @@ class GameWidget(Widget):
       
   def update_health(self):
     self.lifebar.pos = 0, self.height * .95
-    self.lifebar.size = self.width/2 * self.ship.shield / 100., self.height * .05 
+    self.lifebar.size = self.width/2 * self.ship.hp / self.ship.hp_max, self.height * .05 
     # lbl_hp.text = str(self.ship.shield) + '/' + '100'
     
   def inc_score(self, value):

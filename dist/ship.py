@@ -15,8 +15,11 @@ class Ship(Image):
       self.rect_shield = Rectangle(source='img/blank.png')   
     self.afterburner = Image(source='img/afterburner.zip')
     self.add_widget(self.afterburner)
-    self.shield = 100
+    self.hp = 50
+    self.hp_max = 50
     self.anim_delay = .1
+    self.is_shielded = False
+    self.cooldown = 0
       
   def _update_rect(self, *args):
     self.rect_shield.pos = self.pos
@@ -30,11 +33,17 @@ class Ship(Image):
   def steer_y(self, value):
     self.dy = value
     
-  def shield(self, color):
-    if color:
-      self.rect_shield.source = 'img/' + color + '-shield.png'
+  def toggle_shield(self):
+    if self.is_shielded:
+      self.is_shielded = False
+      self.rect_shield.source = 'img/blank.png'
     else:
-      self.rect_shield.source = None
+      self.is_shielded = True
+      self.rect_shield.source = 'img/green-shield.png'
+      # if color:
+      # self.rect_shield.source = 'img/' + color + '-shield.png'
+      # else:
+      
       
   def on_pos(self, *args):
     if self.x < 0:

@@ -9,3 +9,4 @@ class Drone(Image):
     self.dx = 0
     self.dy = 0
     self.size = 80, 80
+    self.counter = 0
